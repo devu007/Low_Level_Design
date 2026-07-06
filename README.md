@@ -59,6 +59,35 @@ categories, each pattern in its own sub-package so the code stays isolated:
 
 ---
 
+## Design problems
+
+Larger "design a system" exercises (not a single GoF pattern, but practice at
+splitting responsibilities across classes).
+
+### Tic-Tac-Toe — `com.lld.behavioral.TicTacToe`
+- **Problem:** Model a playable N×N Tic-Tac-Toe for two players with turn-taking,
+  move validation, and win/draw detection.
+- **Model:** `PieceType` (enum `X`/`O`) → `PlayingPiece` (holds a `PieceType`) with
+  concrete `PlayingPieceX`/`PlayingPieceO`; `Player` (name + its piece); `Board`
+  (the `PlayingPiece[][]` grid and all grid operations).
+- **Controller:** `TicTacToeGame` owns the `Board` and the players, and runs the
+  game loop.
+- **Key design decisions & why:**
+  - **Turn rotation with a queue** — players sit in an `ArrayDeque`; each turn
+    `pollFirst()` takes the current player and `addLast()` re-queues them, so
+    turns alternate without index bookkeeping. On an invalid move, `addFirst()`
+    lets the *same* player retry.
+  - **`Board` owns grid rules** — `isBoardValid` (bounds + emptiness),
+    `isBoardFull`, and `isWinner` live on `Board`, keeping grid logic in one
+    place (Single Responsibility). `TicTacToeGame` only orchestrates.
+  - **Generalized win check** — `isWinner` scans every row, column, and both
+    diagonals via a `lineMatches(type, startRow, startCol, dRow, dCol)` helper
+    that walks a line in a direction, so it works for any board size, not just 3.
+  - **Enums for piece type** — comparing `PieceType` values is safe and readable
+    (no magic strings/ints).
+
+---
+
 ## Key learnings & gotchas
 
 ### Java packages & imports

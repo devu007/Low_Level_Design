@@ -24,6 +24,16 @@ following the existing format. Include:
 - **Here:** how *this* code wires it up (name the concrete classes/interfaces).
 - A key insight or "why it beats the naive approach" line when relevant.
 
+For a larger "design a system" exercise that is **not** a single GoF pattern
+(e.g. Tic-Tac-Toe, parking lot, elevator), add or edit an entry under the
+**## Design problems** section instead, with:
+
+- A `### <Problem> — <full.package.name>` heading.
+- **Problem:** what is being modeled (1–2 lines).
+- **Model / Controller:** the main classes and their responsibilities.
+- **Key design decisions & why:** the notable choices (data structures, where
+  responsibilities live, SOLID reasoning).
+
 Also:
 
 - If a broadly reusable *conceptual* lesson came up (packages/imports, abstract
