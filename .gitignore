@@ -15,3 +15,21 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Secrets & confidential files (never commit these to a public repo)
+.env
+.env.*
+*.env
+secrets.*
+*secret*
+*credential*
+credentials.json
+*.pem
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+id_rsa*
+*.token
+application-secrets.properties
