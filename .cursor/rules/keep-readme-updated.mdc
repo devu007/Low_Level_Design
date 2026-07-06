@@ -12,6 +12,10 @@ existing one changes meaningfully, update `README.md` in the same turn.
 
 ## What to update in `README.md`
 
+The README is **knowledge-only**: concepts, pattern notes, and learnings. Do
+NOT add running/build/environment content (no run commands, `JAVA_HOME`,
+Maven/setup instructions, or project-structure build details).
+
 Under the **## Patterns implemented** section, add or edit the pattern's entry
 following the existing format. Include:
 
@@ -19,18 +23,16 @@ following the existing format. Include:
 - **Idea:** the general intent of the pattern (1–2 lines).
 - **Here:** how *this* code wires it up (name the concrete classes/interfaces).
 - A key insight or "why it beats the naive approach" line when relevant.
-- **Run:** the exact command, e.g.
-  `.\mvnw.cmd -q compile exec:java "-Dexec.mainClass=<full.package.name>.main"`
 
 Also:
 
-- Keep the **Project structure** tree in `README.md` accurate (add the new
-  pattern's folder).
-- If a broadly reusable lesson came up (packages/imports, abstract vs interface,
-  build/run gotchas), add a short bullet under **## Key learnings & gotchas**.
+- If a broadly reusable *conceptual* lesson came up (packages/imports, abstract
+  vs interface, OOP gotchas), add a short bullet under **## Key learnings &
+  gotchas**.
 
 ## Style
 
 - Match the existing README tone and formatting; keep entries concise.
+- Keep it purely informational — no commands or environment steps.
 - Do this automatically as part of implementing/fixing the pattern — don't wait
   to be asked.
