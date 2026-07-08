@@ -40,6 +40,19 @@ categories, each pattern in its own sub-package so the code stays isolated:
   depends on the `Observer` interface — so new displays can be added without
   touching `WeatherData`.
 
+### Chain of Responsibility (behavioral) — `com.lld.behavioral.ChainOfResponsibility`
+- **Idea:** Pass a request along a chain of handlers; each handler either
+  processes it or forwards it to the next, so the sender is decoupled from
+  whoever ultimately handles it.
+- **Here:** `LogProcessor` (base) holds a `next` reference and its `log(level,
+  msg)` forwards to `next`. `InfoLogProcessor`, `DebugLogProcessor`,
+  `ErrorLogProcessor` each `extend` it, handle their own level, and call
+  `super.log(...)` otherwise. The chain is built via constructors:
+  `new InfoLogProcessor(new DebugLogProcessor(new ErrorLogProcessor(null)))`.
+- **Key move:** wiring the successor **through the constructor** (`super(next)`)
+  builds the chain at construction time — each handler only knows about its
+  `next`, not the whole chain.
+
 ### Decorator (structural) — `com.lld.structural.DecoratorPattern`
 - **Idea:** Attach responsibilities to an object dynamically by wrapping it.
   Both the concrete object and the wrappers share the same base type, so
