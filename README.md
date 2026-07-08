@@ -52,6 +52,22 @@ categories, each pattern in its own sub-package so the code stays isolated:
 - **Key move:** the decorator both **extends** the base type (so it *is-a*
   pizza) and **holds** one (so it can *wrap* a pizza).
 
+### Proxy (structural) — `com.lld.structural.ProxyDesign`
+- **Idea:** Provide a stand-in that implements the same interface as a real
+  object and controls access to it — adding behavior like lazy loading, caching,
+  access control, or logging without the client knowing.
+- **Here:** `Image` (interface, `display()`) → `RealImage` (expensive:
+  `loadFromDisk(...)` runs in its constructor) and `ProxyImage`. `ProxyImage`
+  holds the filename and a lazy `RealImage` reference, creating it only on the
+  first `display()` call and reusing it afterwards. So `Loading...` prints once
+  even across multiple `display()` calls.
+- **Key move:** because the proxy implements the same `Image` interface, the
+  client can't tell it apart from the real object — the indirection is where the
+  extra control lives.
+- **Proxy vs Decorator:** same "wrap behind the interface" shape, but a proxy
+  **controls access to** the object, while a decorator **adds responsibilities
+  to** it.
+
 ### Singleton (creational) — `com.lld.creational.singleton`
 - **Idea:** Guarantee a single instance with a global access point.
 - **Here:** `AppConfig` uses the thread-safe *initialization-on-demand holder*
