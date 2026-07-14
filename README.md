@@ -12,6 +12,9 @@ categories, each pattern in its own sub-package so the code stays isolated:
 - `com.lld.structural.*` — how objects are composed into larger structures.
 - `com.lld.behavioral.*` — how objects communicate and share responsibility.
 
+Each pattern below includes a Mermaid UML class diagram. Notation: `<|--` =
+inheritance/implementation ("is-a"), `-->` = association/composition ("has-a").
+
 ---
 
 ## Patterns implemented
@@ -26,121 +29,6 @@ categories, each pattern in its own sub-package so the code stays isolated:
 - **Why it beats inheritance:** without Strategy, every new vehicle type that
   shares behavior forces you to duplicate/override methods. Strategy swaps
   behavior by plugging in a different object.
-
-### Observer (behavioral) — `com.lld.behavioral.ObserverPattern`
-- **Idea:** Define a one-to-many dependency so that when one object (the
-  *subject*) changes state, all its dependents (*observers*) are notified
-  automatically — without the subject knowing their concrete types.
-- **Here:** `Subject` keeps a `List<Observer>` (`addObserver`/`removeObserver`/
-  `notifyObservers`). `WeatherData extends Subject`; its `setMeasurements(...)`
-  calls `notifyObservers(this)`. `Observer` implementations `PhoneDisplay` and
-  `TVDisplay` register themselves in their constructor (`addObserver(this)`) and,
-  on `update(WeatherData)`, pull the latest values and re-`display()`.
-- **Key move:** observers **register** with the subject and the subject only
-  depends on the `Observer` interface — so new displays can be added without
-  touching `WeatherData`.
-
-### Chain of Responsibility (behavioral) — `com.lld.behavioral.ChainOfResponsibility`
-- **Idea:** Pass a request along a chain of handlers; each handler either
-  processes it or forwards it to the next, so the sender is decoupled from
-  whoever ultimately handles it.
-- **Here:** `LogProcessor` (base) holds a `next` reference and its `log(level,
-  msg)` forwards to `next`. `InfoLogProcessor`, `DebugLogProcessor`,
-  `ErrorLogProcessor` each `extend` it, handle their own level, and call
-  `super.log(...)` otherwise. The chain is built via constructors:
-  `new InfoLogProcessor(new DebugLogProcessor(new ErrorLogProcessor(null)))`.
-- **Key move:** wiring the successor **through the constructor** (`super(next)`)
-  builds the chain at construction time — each handler only knows about its
-  `next`, not the whole chain.
-
-### Decorator (structural) — `com.lld.structural.DecoratorPattern`
-- **Idea:** Attach responsibilities to an object dynamically by wrapping it.
-  Both the concrete object and the wrappers share the same base type, so
-  wrappers can be stacked endlessly.
-- **Here:** abstract `BasePizza` (defines `cost()`) → concrete `MargheritaPizza`,
-  `VeggiePizza`; abstract `ToppingsDecorator extends BasePizza` →
-  `CheeseToppings`, `MushroomTopping`. Each topping *wraps a* `BasePizza` and
-  adds to `cost()`. `new MushroomTopping(new CheeseToppings(new MargheritaPizza()))`
-  → 100 + 10 + 15 = **125**.
-- **Key move:** the decorator both **extends** the base type (so it *is-a*
-  pizza) and **holds** one (so it can *wrap* a pizza).
-
-### Adapter (structural) — `com.lld.structural.AdapterPattern`
-- **Idea:** Let two incompatible interfaces work together by wrapping an
-  existing class (the *adaptee*) in an adapter that exposes the interface the
-  client expects — without changing either side.
-- **Here:** `SmartDevices` (target interface, `turnOn()`/`turnOff()`) is what the
-  client uses. `SmartLight` and `AirConditioner` are pre-existing *adaptees* with
-  their own incompatible methods (`connectWithBluetooth()`, `switchOn()`,
-  `startCooling()`, …). `SmartLightAdapter` and `AirConditionerAdapter`
-  `implement SmartDevices`, *hold* an adaptee, and translate `turnOn()`/
-  `turnOff()` into the right sequence of adaptee calls.
-- **Key move:** the adapter **implements the target interface** and **delegates**
-  to the wrapped object — so the client only talks to `SmartDevices` and never
-  knows the concrete device's odd API.
-- **Adapter vs Decorator/Proxy:** all wrap an object, but an adapter **changes
-  the interface** to a different one the client wants; a decorator keeps the same
-  interface and **adds behavior**; a proxy keeps the same interface and
-  **controls access**.
-
-### Proxy (structural) — `com.lld.structural.ProxyDesign`
-- **Idea:** Provide a stand-in that implements the same interface as a real
-  object and controls access to it — adding behavior like lazy loading, caching,
-  access control, or logging without the client knowing.
-- **Here:** `Image` (interface, `display()`) → `RealImage` (expensive:
-  `loadFromDisk(...)` runs in its constructor) and `ProxyImage`. `ProxyImage`
-  holds the filename and a lazy `RealImage` reference, creating it only on the
-  first `display()` call and reusing it afterwards. So `Loading...` prints once
-  even across multiple `display()` calls.
-- **Key move:** because the proxy implements the same `Image` interface, the
-  client can't tell it apart from the real object — the indirection is where the
-  extra control lives.
-- **Proxy vs Decorator:** same "wrap behind the interface" shape, but a proxy
-  **controls access to** the object, while a decorator **adds responsibilities
-  to** it.
-
-### Singleton (creational) — `com.lld.creational.singleton`
-- **Idea:** Guarantee a single instance with a global access point.
-- **Here:** `AppConfig` uses the thread-safe *initialization-on-demand holder*
-  idiom (`getInstance()` returns the one `Holder.INSTANCE`).
-
----
-
-## Design problems
-
-Larger "design a system" exercises (not a single GoF pattern, but practice at
-splitting responsibilities across classes).
-
-### Tic-Tac-Toe — `com.lld.behavioral.TicTacToe`
-- **Problem:** Model a playable N×N Tic-Tac-Toe for two players with turn-taking,
-  move validation, and win/draw detection.
-- **Model:** `PieceType` (enum `X`/`O`) → `PlayingPiece` (holds a `PieceType`) with
-  concrete `PlayingPieceX`/`PlayingPieceO`; `Player` (name + its piece); `Board`
-  (the `PlayingPiece[][]` grid and all grid operations).
-- **Controller:** `TicTacToeGame` owns the `Board` and the players, and runs the
-  game loop.
-- **Key design decisions & why:**
-  - **Turn rotation with a queue** — players sit in an `ArrayDeque`; each turn
-    `pollFirst()` takes the current player and `addLast()` re-queues them, so
-    turns alternate without index bookkeeping. On an invalid move, `addFirst()`
-    lets the *same* player retry.
-  - **`Board` owns grid rules** — `isBoardValid` (bounds + emptiness),
-    `isBoardFull`, and `isWinner` live on `Board`, keeping grid logic in one
-    place (Single Responsibility). `TicTacToeGame` only orchestrates.
-  - **Generalized win check** — `isWinner` scans every row, column, and both
-    diagonals via a `lineMatches(type, startRow, startCol, dRow, dCol)` helper
-    that walks a line in a direction, so it works for any board size, not just 3.
-  - **Enums for piece type** — comparing `PieceType` values is safe and readable
-    (no magic strings/ints).
-
----
-
-## Class design (UML)
-
-Mermaid class diagrams for each pattern/problem in this codebase. `<|--` =
-inheritance/implementation ("is-a"), `-->` = association/composition ("has-a").
-
-### Strategy — `com.lld.behavioral.StrategyPattern`
 
 ```mermaid
 classDiagram
@@ -169,7 +57,18 @@ classDiagram
     Vehicle <|-- SportsVehicle
 ```
 
-### Observer — `com.lld.behavioral.ObserverPattern`
+### Observer (behavioral) — `com.lld.behavioral.ObserverPattern`
+- **Idea:** Define a one-to-many dependency so that when one object (the
+  *subject*) changes state, all its dependents (*observers*) are notified
+  automatically — without the subject knowing their concrete types.
+- **Here:** `Subject` keeps a `List<Observer>` (`addObserver`/`removeObserver`/
+  `notifyObservers`). `WeatherData extends Subject`; its `setMeasurements(...)`
+  calls `notifyObservers(this)`. `Observer` implementations `PhoneDisplay` and
+  `TVDisplay` register themselves in their constructor (`addObserver(this)`) and,
+  on `update(WeatherData)`, pull the latest values and re-`display()`.
+- **Key move:** observers **register** with the subject and the subject only
+  depends on the `Observer` interface — so new displays can be added without
+  touching `WeatherData`.
 
 ```mermaid
 classDiagram
@@ -205,7 +104,18 @@ classDiagram
     Observer <|.. TVDisplay
 ```
 
-### Chain of Responsibility — `com.lld.behavioral.ChainOfResponsibility`
+### Chain of Responsibility (behavioral) — `com.lld.behavioral.ChainOfResponsibility`
+- **Idea:** Pass a request along a chain of handlers; each handler either
+  processes it or forwards it to the next, so the sender is decoupled from
+  whoever ultimately handles it.
+- **Here:** `LogProcessor` (base) holds a `next` reference and its `log(level,
+  msg)` forwards to `next`. `InfoLogProcessor`, `DebugLogProcessor`,
+  `ErrorLogProcessor` each `extend` it, handle their own level, and call
+  `super.log(...)` otherwise. The chain is built via constructors:
+  `new InfoLogProcessor(new DebugLogProcessor(new ErrorLogProcessor(null)))`.
+- **Key move:** wiring the successor **through the constructor** (`super(next)`)
+  builds the chain at construction time — each handler only knows about its
+  `next`, not the whole chain.
 
 ```mermaid
 classDiagram
@@ -233,7 +143,69 @@ classDiagram
     LogProcessor --> LogProcessor : next
 ```
 
-### Adapter — `com.lld.structural.AdapterPattern`
+### Decorator (structural) — `com.lld.structural.DecoratorPattern`
+- **Idea:** Attach responsibilities to an object dynamically by wrapping it.
+  Both the concrete object and the wrappers share the same base type, so
+  wrappers can be stacked endlessly.
+- **Here:** abstract `BasePizza` (defines `cost()`) → concrete `MargheritaPizza`,
+  `VeggiePizza`; abstract `ToppingsDecorator extends BasePizza` →
+  `CheeseToppings`, `MushroomTopping`. Each topping *wraps a* `BasePizza` and
+  adds to `cost()`. `new MushroomTopping(new CheeseToppings(new MargheritaPizza()))`
+  → 100 + 10 + 15 = **125**.
+- **Key move:** the decorator both **extends** the base type (so it *is-a*
+  pizza) and **holds** one (so it can *wrap* a pizza).
+
+```mermaid
+classDiagram
+    class BasePizza {
+        <<abstract>>
+        +cost() int
+    }
+    class MargheritaPizza {
+        +cost() int
+    }
+    class VeggiePizza {
+        +cost() int
+    }
+    class ToppingsDecorator {
+        <<abstract>>
+        +cost() int
+    }
+    class CheeseToppings {
+        -BasePizza basePizza
+        +cost() int
+    }
+    class MushroomTopping {
+        -BasePizza basePizza
+        +cost() int
+    }
+
+    BasePizza <|-- MargheritaPizza
+    BasePizza <|-- VeggiePizza
+    BasePizza <|-- ToppingsDecorator
+    ToppingsDecorator <|-- CheeseToppings
+    ToppingsDecorator <|-- MushroomTopping
+    CheeseToppings --> BasePizza
+    MushroomTopping --> BasePizza
+```
+
+### Adapter (structural) — `com.lld.structural.AdapterPattern`
+- **Idea:** Let two incompatible interfaces work together by wrapping an
+  existing class (the *adaptee*) in an adapter that exposes the interface the
+  client expects — without changing either side.
+- **Here:** `SmartDevices` (target interface, `turnOn()`/`turnOff()`) is what the
+  client uses. `SmartLight` and `AirConditioner` are pre-existing *adaptees* with
+  their own incompatible methods (`connectWithBluetooth()`, `switchOn()`,
+  `startCooling()`, …). `SmartLightAdapter` and `AirConditionerAdapter`
+  `implement SmartDevices`, *hold* an adaptee, and translate `turnOn()`/
+  `turnOff()` into the right sequence of adaptee calls.
+- **Key move:** the adapter **implements the target interface** and **delegates**
+  to the wrapped object — so the client only talks to `SmartDevices` and never
+  knows the concrete device's odd API.
+- **Adapter vs Decorator/Proxy:** all wrap an object, but an adapter **changes
+  the interface** to a different one the client wants; a decorator keeps the same
+  interface and **adds behavior**; a proxy keeps the same interface and
+  **controls access**.
 
 ```mermaid
 classDiagram
@@ -271,43 +243,21 @@ classDiagram
     AirConditionerAdapter --> AirConditioner
 ```
 
-### Decorator — `com.lld.structural.DecoratorPattern`
-
-```mermaid
-classDiagram
-    class BasePizza {
-        <<abstract>>
-        +cost() int
-    }
-    class MargheritaPizza {
-        +cost() int
-    }
-    class VeggiePizza {
-        +cost() int
-    }
-    class ToppingsDecorator {
-        <<abstract>>
-        +cost() int
-    }
-    class CheeseToppings {
-        -BasePizza basePizza
-        +cost() int
-    }
-    class MushroomTopping {
-        -BasePizza basePizza
-        +cost() int
-    }
-
-    BasePizza <|-- MargheritaPizza
-    BasePizza <|-- VeggiePizza
-    BasePizza <|-- ToppingsDecorator
-    ToppingsDecorator <|-- CheeseToppings
-    ToppingsDecorator <|-- MushroomTopping
-    CheeseToppings --> BasePizza
-    MushroomTopping --> BasePizza
-```
-
-### Proxy — `com.lld.structural.ProxyDesign`
+### Proxy (structural) — `com.lld.structural.ProxyDesign`
+- **Idea:** Provide a stand-in that implements the same interface as a real
+  object and controls access to it — adding behavior like lazy loading, caching,
+  access control, or logging without the client knowing.
+- **Here:** `Image` (interface, `display()`) → `RealImage` (expensive:
+  `loadFromDisk(...)` runs in its constructor) and `ProxyImage`. `ProxyImage`
+  holds the filename and a lazy `RealImage` reference, creating it only on the
+  first `display()` call and reusing it afterwards. So `Loading...` prints once
+  even across multiple `display()` calls.
+- **Key move:** because the proxy implements the same `Image` interface, the
+  client can't tell it apart from the real object — the indirection is where the
+  extra control lives.
+- **Proxy vs Decorator:** same "wrap behind the interface" shape, but a proxy
+  **controls access to** the object, while a decorator **adds responsibilities
+  to** it.
 
 ```mermaid
 classDiagram
@@ -333,7 +283,10 @@ classDiagram
     ProxyImage --> RealImage : lazy
 ```
 
-### Singleton — `com.lld.creational.singleton`
+### Singleton (creational) — `com.lld.creational.singleton`
+- **Idea:** Guarantee a single instance with a global access point.
+- **Here:** `AppConfig` uses the thread-safe *initialization-on-demand holder*
+  idiom (`getInstance()` returns the one `Holder.INSTANCE`).
 
 ```mermaid
 classDiagram
@@ -352,7 +305,34 @@ classDiagram
     Holder --> AppConfig : INSTANCE
 ```
 
+---
+
+## Design problems
+
+Larger "design a system" exercises (not a single GoF pattern, but practice at
+splitting responsibilities across classes).
+
 ### Tic-Tac-Toe — `com.lld.behavioral.TicTacToe`
+- **Problem:** Model a playable N×N Tic-Tac-Toe for two players with turn-taking,
+  move validation, and win/draw detection.
+- **Model:** `PieceType` (enum `X`/`O`) → `PlayingPiece` (holds a `PieceType`) with
+  concrete `PlayingPieceX`/`PlayingPieceO`; `Player` (name + its piece); `Board`
+  (the `PlayingPiece[][]` grid and all grid operations).
+- **Controller:** `TicTacToeGame` owns the `Board` and the players, and runs the
+  game loop.
+- **Key design decisions & why:**
+  - **Turn rotation with a queue** — players sit in an `ArrayDeque`; each turn
+    `pollFirst()` takes the current player and `addLast()` re-queues them, so
+    turns alternate without index bookkeeping. On an invalid move, `addFirst()`
+    lets the *same* player retry.
+  - **`Board` owns grid rules** — `isBoardValid` (bounds + emptiness),
+    `isBoardFull`, and `isWinner` live on `Board`, keeping grid logic in one
+    place (Single Responsibility). `TicTacToeGame` only orchestrates.
+  - **Generalized win check** — `isWinner` scans every row, column, and both
+    diagonals via a `lineMatches(type, startRow, startCol, dRow, dCol)` helper
+    that walks a line in a direction, so it works for any board size, not just 3.
+  - **Enums for piece type** — comparing `PieceType` values is safe and readable
+    (no magic strings/ints).
 
 ```mermaid
 classDiagram
