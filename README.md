@@ -65,6 +65,24 @@ categories, each pattern in its own sub-package so the code stays isolated:
 - **Key move:** the decorator both **extends** the base type (so it *is-a*
   pizza) and **holds** one (so it can *wrap* a pizza).
 
+### Adapter (structural) — `com.lld.structural.AdapterPattern`
+- **Idea:** Let two incompatible interfaces work together by wrapping an
+  existing class (the *adaptee*) in an adapter that exposes the interface the
+  client expects — without changing either side.
+- **Here:** `SmartDevices` (target interface, `turnOn()`/`turnOff()`) is what the
+  client uses. `SmartLight` and `AirConditioner` are pre-existing *adaptees* with
+  their own incompatible methods (`connectWithBluetooth()`, `switchOn()`,
+  `startCooling()`, …). `SmartLightAdapter` and `AirConditionerAdapter`
+  `implement SmartDevices`, *hold* an adaptee, and translate `turnOn()`/
+  `turnOff()` into the right sequence of adaptee calls.
+- **Key move:** the adapter **implements the target interface** and **delegates**
+  to the wrapped object — so the client only talks to `SmartDevices` and never
+  knows the concrete device's odd API.
+- **Adapter vs Decorator/Proxy:** all wrap an object, but an adapter **changes
+  the interface** to a different one the client wants; a decorator keeps the same
+  interface and **adds behavior**; a proxy keeps the same interface and
+  **controls access**.
+
 ### Proxy (structural) — `com.lld.structural.ProxyDesign`
 - **Idea:** Provide a stand-in that implements the same interface as a real
   object and controls access to it — adding behavior like lazy loading, caching,
@@ -114,6 +132,268 @@ splitting responsibilities across classes).
     that walks a line in a direction, so it works for any board size, not just 3.
   - **Enums for piece type** — comparing `PieceType` values is safe and readable
     (no magic strings/ints).
+
+---
+
+## Class design (UML)
+
+Mermaid class diagrams for each pattern/problem in this codebase. `<|--` =
+inheritance/implementation ("is-a"), `-->` = association/composition ("has-a").
+
+### Strategy — `com.lld.behavioral.StrategyPattern`
+
+```mermaid
+classDiagram
+    class DriveStrategy {
+        <<interface>>
+        +drive()
+    }
+    class NormalDriveStrategy {
+        +drive()
+    }
+    class SportsDriveStrategy {
+        +drive()
+    }
+    class Vehicle {
+        -DriveStrategy driveStrategyObject
+        +Vehicle(DriveStrategy)
+        +drive()
+    }
+    class GoodsVehicle
+    class SportsVehicle
+
+    DriveStrategy <|.. NormalDriveStrategy
+    DriveStrategy <|.. SportsDriveStrategy
+    Vehicle --> DriveStrategy
+    Vehicle <|-- GoodsVehicle
+    Vehicle <|-- SportsVehicle
+```
+
+### Observer — `com.lld.behavioral.ObserverPattern`
+
+```mermaid
+classDiagram
+    class Observer {
+        <<interface>>
+        +update(String)
+        +update(WeatherData)
+    }
+    class Subject {
+        -List~Observer~ observers
+        +addObserver(Observer)
+        +removeObserver(Observer)
+        +notifyObservers(WeatherData)
+    }
+    class WeatherData {
+        -float temperature
+        -float humidity
+        -float pressure
+        +setMeasurements(...)
+    }
+    class PhoneDisplay {
+        +update(WeatherData)
+        +display()
+    }
+    class TVDisplay {
+        +update(WeatherData)
+        +display()
+    }
+
+    Subject <|-- WeatherData
+    Subject --> Observer
+    Observer <|.. PhoneDisplay
+    Observer <|.. TVDisplay
+```
+
+### Chain of Responsibility — `com.lld.behavioral.ChainOfResponsibility`
+
+```mermaid
+classDiagram
+    class LogProcessor {
+        +int INFO
+        +int DEBUG
+        +int ERROR
+        -LogProcessor next
+        +LogProcessor(LogProcessor next)
+        +log(int, String)
+    }
+    class InfoLogProcessor {
+        +log(int, String)
+    }
+    class DebugLogProcessor {
+        +log(int, String)
+    }
+    class ErrorLogProcessor {
+        +log(int, String)
+    }
+
+    LogProcessor <|-- InfoLogProcessor
+    LogProcessor <|-- DebugLogProcessor
+    LogProcessor <|-- ErrorLogProcessor
+    LogProcessor --> LogProcessor : next
+```
+
+### Adapter — `com.lld.structural.AdapterPattern`
+
+```mermaid
+classDiagram
+    class SmartDevices {
+        <<interface>>
+        +turnOn()
+        +turnOff()
+    }
+    class SmartLight {
+        +connectWithBluetooth()
+        +switchOn()
+        +switchOff()
+        +disconnectFromBluetooth()
+    }
+    class AirConditioner {
+        +connectWithBluetooth()
+        +startCooling()
+        +stopCooling()
+        +disconnectFromBluetooth()
+    }
+    class SmartLightAdapter {
+        -SmartLight smartLight
+        +turnOn()
+        +turnOff()
+    }
+    class AirConditionerAdapter {
+        -AirConditioner airConditioner
+        +turnOn()
+        +turnOff()
+    }
+
+    SmartDevices <|.. SmartLightAdapter
+    SmartDevices <|.. AirConditionerAdapter
+    SmartLightAdapter --> SmartLight
+    AirConditionerAdapter --> AirConditioner
+```
+
+### Decorator — `com.lld.structural.DecoratorPattern`
+
+```mermaid
+classDiagram
+    class BasePizza {
+        <<abstract>>
+        +cost() int
+    }
+    class MargheritaPizza {
+        +cost() int
+    }
+    class VeggiePizza {
+        +cost() int
+    }
+    class ToppingsDecorator {
+        <<abstract>>
+        +cost() int
+    }
+    class CheeseToppings {
+        -BasePizza basePizza
+        +cost() int
+    }
+    class MushroomTopping {
+        -BasePizza basePizza
+        +cost() int
+    }
+
+    BasePizza <|-- MargheritaPizza
+    BasePizza <|-- VeggiePizza
+    BasePizza <|-- ToppingsDecorator
+    ToppingsDecorator <|-- CheeseToppings
+    ToppingsDecorator <|-- MushroomTopping
+    CheeseToppings --> BasePizza
+    MushroomTopping --> BasePizza
+```
+
+### Proxy — `com.lld.structural.ProxyDesign`
+
+```mermaid
+classDiagram
+    class Image {
+        <<interface>>
+        +display()
+    }
+    class RealImage {
+        -String filename
+        +RealImage(String)
+        -loadFromDisk(String)
+        +display()
+    }
+    class ProxyImage {
+        -RealImage realImage
+        -String filename
+        +ProxyImage(String)
+        +display()
+    }
+
+    Image <|.. RealImage
+    Image <|.. ProxyImage
+    ProxyImage --> RealImage : lazy
+```
+
+### Singleton — `com.lld.creational.singleton`
+
+```mermaid
+classDiagram
+    class AppConfig {
+        -Map~String,String~ values
+        -AppConfig()
+        +getInstance() AppConfig$
+        +set(String, String)
+        +get(String) String
+    }
+    class Holder {
+        -AppConfig INSTANCE$
+    }
+
+    AppConfig --> Holder : getInstance()
+    Holder --> AppConfig : INSTANCE
+```
+
+### Tic-Tac-Toe — `com.lld.behavioral.TicTacToe`
+
+```mermaid
+classDiagram
+    class PieceType {
+        <<enum>>
+        X
+        O
+    }
+    class PlayingPiece {
+        +PieceType pieceType
+    }
+    class PlayingPieceX
+    class PlayingPieceO
+    class Player {
+        -String name
+        -PlayingPiece playingPiece
+        +getName() String
+        +getPlayingPiece() PlayingPiece
+    }
+    class Board {
+        -int size
+        -PlayingPiece[][] board
+        +addPiece(int, int, PlayingPiece)
+        +isBoardValid(int, int) boolean
+        +isBoardFull() boolean
+        +isWinner(PlayingPiece) boolean
+    }
+    class TicTacToeGame {
+        -Board board
+        -Deque~Player~ players
+        +startGame()
+    }
+
+    PlayingPiece <|-- PlayingPieceX
+    PlayingPiece <|-- PlayingPieceO
+    PlayingPiece --> PieceType
+    Player --> PlayingPiece
+    Board --> PlayingPiece
+    TicTacToeGame --> Board
+    TicTacToeGame --> Player
+```
 
 ---
 
