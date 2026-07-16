@@ -283,6 +283,49 @@ classDiagram
     ProxyImage --> RealImage : lazy
 ```
 
+### Facade (structural) — `com.lld.structural.FacadePattern`
+- **Idea:** Provide one simplified, high-level interface over a set of
+  complex subsystems, so the client makes a single call instead of orchestrating
+  many objects itself.
+- **Here:** `HomeTheatreFacade` *holds* a `Projector`, `Amplifier`, and
+  `StreamingPlayer` (the subsystems). `watchMovie(...)` turns all three `on()` and
+  `endMovie()` turns them `off()`, so the client only calls
+  `homeTheatre.watchMovie("...")` / `endMovie()` instead of poking each device.
+- **Key move:** the facade **wraps and coordinates** the subsystems but does
+  *not* hide them — the client can still use `Projector`/`Amplifier` directly if
+  it needs to.
+- **Facade vs Adapter:** an adapter **converts** one interface into another the
+  client expects; a facade **simplifies** access to many objects behind one
+  convenient entry point (it doesn't change any single interface).
+
+```mermaid
+classDiagram
+    class HomeTheatreFacade {
+        -Projector projector
+        -Amplifier amplifier
+        -StreamingPlayer player
+        +HomeTheatreFacade(Projector, Amplifier, StreamingPlayer)
+        +watchMovie(String)
+        +endMovie()
+    }
+    class Projector {
+        +on()
+        +off()
+    }
+    class Amplifier {
+        +on()
+        +off()
+    }
+    class StreamingPlayer {
+        +on()
+        +off()
+    }
+
+    HomeTheatreFacade --> Projector
+    HomeTheatreFacade --> Amplifier
+    HomeTheatreFacade --> StreamingPlayer
+```
+
 ### Singleton (creational) — `com.lld.creational.singleton`
 - **Idea:** Guarantee a single instance with a global access point.
 - **Here:** `AppConfig` uses the thread-safe *initialization-on-demand holder*
